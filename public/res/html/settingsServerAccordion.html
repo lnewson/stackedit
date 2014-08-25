@@ -1,0 +1,12 @@
+<div class="panel">
+	<div class="accordion-heading">
+		<a data-toggle="collapse" data-parent=".accordion-servers"
+			class="accordion-toggle" href="#accordion-servers-collapse-<%= serverGroupId %>">
+			<%= serverGroupName %> </a>
+	</div>
+	<div id="accordion-servers-collapse-<%= serverGroupId %>" <% if(!isOpen) print('class="collapse"') %>
+    data-server-group="<%= serverGroupId %>">
+		<div class="accordion-inner clearfix"><%= settingsBlock %></div>
+        <button type="button" class="btn btn-primary action-servers-add pull-right" aria-hidden="true">New Server</button>
+	</div>
+</div>

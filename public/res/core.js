@@ -10,6 +10,7 @@ define([
 	"storage",
 	"settings",
 	"eventMgr",
+    "serversMgr",
 	"monetizejs",
 	"text!html/bodyIndex.html",
 	"text!html/bodyViewer.html",
@@ -17,7 +18,7 @@ define([
 	"text!html/tooltipSettingsPdfOptions.html",
 	"storage",
 	'pagedown'
-], function($, _, crel, editor, layout, constants, utils, storage, settings, eventMgr, MonetizeJS, bodyIndexHTML, bodyViewerHTML, settingsTemplateTooltipHTML, settingsPdfOptionsTooltipHTML) {
+], function($, _, crel, editor, layout, constants, utils, storage, settings, eventMgr, serversMgr, MonetizeJS, bodyIndexHTML, bodyViewerHTML, settingsTemplateTooltipHTML, settingsPdfOptionsTooltipHTML) {
 
 	var core = {};
 
@@ -146,6 +147,9 @@ define([
 		// PDF options
 		utils.setInputValue("#textarea-settings-pdf-options", settings.pdfOptions);
 
+        // Load the servers
+        serversMgr.loadServers();
+        
 		// Load extension settings
 		eventMgr.onLoadSettings();
 	}
@@ -191,6 +195,9 @@ define([
 		// PDF options
 		newSettings.pdfOptions = utils.getInputJSONValue("#textarea-settings-pdf-options", event);
 
+        // Save server settings
+        serversMgr.saveServers(newSettings);
+        
 		// Save extension settings
 		newSettings.extensionSettings = {};
 		eventMgr.onSaveSettings(newSettings.extensionSettings, event);
@@ -342,19 +349,19 @@ define([
 		$alerts = $();
 	}
 
-	function performPayment() {
-		monetize.getPayments({
-			pricingOptions: [
-				'once',
-				'yearly'
-			]
-		}, function(err, payments) {
-			if(isSponsor(payments)) {
-				eventMgr.onMessage('Thank you for sponsoring StackEdit!');
-				removeAlerts();
-			}
-		});
-	}
+    function performPayment() {
+        monetize.getPayments({
+            pricingOptions: [
+                'once',
+                'yearly'
+            ]
+        }, function(err, payments) {
+            if(isSponsor(payments)) {
+                eventMgr.onMessage('Thank you for sponsoring StackEdit!');
+                removeAlerts();
+            }
+        });
+    }
 
 	var checkPayment = _.debounce(function() {
 		if(isOffline) {
@@ -373,208 +380,208 @@ define([
 		});
 	}, 3000);
 
-	//eventMgr.addListener('onOfflineChanged', checkPayment);
+    //eventMgr.addListener('onOfflineChanged', checkPayment);
 
-	// Other initialization that are not prioritary
-	eventMgr.addListener("onReady", function() {
+    // Other initialization that are not prioritary
+    eventMgr.addListener("onReady", function() {
 
-		$('.modal').on('shown.bs.modal', function() {
-			var $elt = $(this);
-			setTimeout(function() {
-				// When modal opens focus on the first button
-				$elt.find('.btn:first').focus();
-				// Or on the first link if any
-				$elt.find('button:first').focus();
-				// Or on the first input if any
-				$elt.find("input:enabled:visible:first").focus();
-			}, 50);
-		}).on('hidden.bs.modal', function() {
-			// Focus on the editor when modal is gone
-			editor.focus();
-			// Revert to current theme when settings modal is closed
-			applyTheme(window.theme);
-		}).keyup(function(e) {
-			// Handle enter key in modals
-			if(e.which == 13 && !$(e.target).is("textarea")) {
-				$(this).find(".modal-footer a:last").click();
-			}
-		});
+        $('.modal').on('shown.bs.modal', function() {
+            var $elt = $(this);
+            setTimeout(function() {
+                // When modal opens focus on the first button
+                $elt.find('.btn:first').focus();
+                // Or on the first link if any
+                $elt.find('button:first').focus();
+                // Or on the first input if any
+                $elt.find("input:enabled:visible:first").focus();
+            }, 50);
+        }).on('hidden.bs.modal', function() {
+                // Focus on the editor when modal is gone
+                editor.focus();
+                // Revert to current theme when settings modal is closed
+                applyTheme(window.theme);
+            }).keyup(function(e) {
+                // Handle enter key in modals
+                if(e.which == 13 && !$(e.target).is("textarea")) {
+                    $(this).find(".modal-footer a:last").click();
+                }
+            });
 
-		// Click events on "insert link" and "insert image" dialog buttons
-		$(".action-insert-link").click(function(e) {
-			var value = utils.getInputTextValue($("#input-insert-link"), e);
-			if(value !== undefined) {
-				core.insertLinkCallback(value);
-				core.insertLinkCallback = undefined;
-			}
-		});
-		$(".action-insert-image").click(function(e) {
-			var value = utils.getInputTextValue($("#input-insert-image"), e);
-			if(value !== undefined) {
-				core.insertLinkCallback(value);
-				core.insertLinkCallback = undefined;
-			}
-		});
+        // Click events on "insert link" and "insert image" dialog buttons
+        $(".action-insert-link").click(function(e) {
+            var value = utils.getInputTextValue($("#input-insert-link"), e);
+            if(value !== undefined) {
+                core.insertLinkCallback(value);
+                core.insertLinkCallback = undefined;
+            }
+        });
+        $(".action-insert-image").click(function(e) {
+            var value = utils.getInputTextValue($("#input-insert-image"), e);
+            if(value !== undefined) {
+                core.insertLinkCallback(value);
+                core.insertLinkCallback = undefined;
+            }
+        });
 
-		// Hide events on "insert link" and "insert image" dialogs
-		$(".modal-insert-link, .modal-insert-image").on('hidden.bs.modal', function() {
-			if(core.insertLinkCallback !== undefined) {
-				core.insertLinkCallback(null);
-				core.insertLinkCallback = undefined;
-			}
-		});
+        // Hide events on "insert link" and "insert image" dialogs
+        $(".modal-insert-link, .modal-insert-image").on('hidden.bs.modal', function() {
+            if(core.insertLinkCallback !== undefined) {
+                core.insertLinkCallback(null);
+                core.insertLinkCallback = undefined;
+            }
+        });
 
-		// Settings loading/saving
-		$(".action-load-settings").click(function() {
-			loadSettings();
-		});
-		$(".action-apply-settings").click(function(e) {
-			saveSettings(e);
-			if(!e.isPropagationStopped()) {
-				window.location.reload();
-			}
-		});
-		$('.action-add-google-drive-account').click(function() {
-			if(settings.gdriveMultiAccount === 3) {
-				return;
-			}
-			settings.gdriveMultiAccount++;
-			storage.settings = JSON.stringify(settings);
-			window.location.reload();
-		});
+        // Settings loading/saving
+        $(".action-load-settings").click(function() {
+            loadSettings();
+        });
+        $(".action-apply-settings").click(function(e) {
+            saveSettings(e);
+            if(!e.isPropagationStopped()) {
+                window.location.reload();
+            }
+        });
+        $('.action-add-google-drive-account').click(function() {
+            if(settings.gdriveMultiAccount === 3) {
+                return;
+            }
+            settings.gdriveMultiAccount++;
+            storage.settings = JSON.stringify(settings);
+            window.location.reload();
+        });
 
-		// Hot theme switcher in the settings
-		var currentTheme = window.theme;
+        // Hot theme switcher in the settings
+        var currentTheme = window.theme;
 
-		function applyTheme(theme) {
-			theme = theme || 'default';
-			if(currentTheme != theme) {
-				var themeModule = "less!themes/" + theme;
-				if(window.baseDir.indexOf('-min') !== -1) {
-					themeModule = "css!themes/" + theme;
-				}
-				// Undefine the module in RequireJS
-				requirejs.undef(themeModule);
-				// Then reload the style
-				require([
-					themeModule
-				]);
-				currentTheme = theme;
-			}
-		}
+        function applyTheme(theme) {
+            theme = theme || 'default';
+            if(currentTheme != theme) {
+                var themeModule = "less!themes/" + theme;
+                if(window.baseDir.indexOf('-min') !== -1) {
+                    themeModule = "css!themes/" + theme;
+                }
+                // Undefine the module in RequireJS
+                requirejs.undef(themeModule);
+                // Then reload the style
+                require([
+                    themeModule
+                ]);
+                currentTheme = theme;
+            }
+        }
 
-		$themeInputElt = $("#input-settings-theme");
-		$themeInputElt.on("change", function() {
-			applyTheme(this.value);
-		});
+        $themeInputElt = $("#input-settings-theme");
+        $themeInputElt.on("change", function() {
+            applyTheme(this.value);
+        });
 
-		// Import docs and settings
-		$(".action-import-docs-settings").click(function() {
-			$("#input-file-import-docs-settings").click();
-		});
-		var newstorage;
-		$("#input-file-import-docs-settings").change(function(evt) {
-			var files = (evt.dataTransfer || evt.target).files;
-			$(".modal-settings").modal("hide");
-			_.each(files, function(file) {
-				var reader = new FileReader();
-				reader.onload = (function(importedFile) {
-					return function(e) {
-						try {
-							newstorage = JSON.parse(e.target.result);
-							// Compare storage version
-							var newVersion = parseInt(newstorage.version.match(/^v(\d+)$/)[1], 10);
-							var currentVersion = parseInt(storage.version.match(/^v(\d+)$/)[1], 10);
-							if(newVersion > currentVersion) {
-								// We manage storage upgrade, not downgrade
-								eventMgr.onError("Incompatible version. Please upgrade StackEdit.");
-							} else {
-								$('.modal-import-docs-settings').modal('show');
-							}
-						}
-						catch(exc) {
-							eventMgr.onError("Wrong format: " + importedFile.name);
-						}
-						$("#input-file-import-docs-settings").val('');
-					};
-				})(file);
-				reader.readAsText(file);
-			});
-		});
-		$(".action-import-docs-settings-confirm").click(function() {
-			storage.clear();
-			var allowedKeys = /^file\.|^folder\.|^publish\.|^settings$|^sync\.|^google\.|^author\.|^themeV4$|^version$/;
-			_.each(newstorage, function(value, key) {
-				if(allowedKeys.test(key)) {
-					storage[key] = value;
-				}
-			});
-			window.location.reload();
-		});
-		// Export settings
-		$(".action-export-docs-settings").click(function() {
-			utils.saveAs(JSON.stringify(storage), "StackEdit local storage.json");
-		});
+        // Import docs and settings
+        $(".action-import-docs-settings").click(function() {
+            $("#input-file-import-docs-settings").click();
+        });
+        var newstorage;
+        $("#input-file-import-docs-settings").change(function(evt) {
+            var files = (evt.dataTransfer || evt.target).files;
+            $(".modal-settings").modal("hide");
+            _.each(files, function(file) {
+                var reader = new FileReader();
+                reader.onload = (function(importedFile) {
+                    return function(e) {
+                        try {
+                            newstorage = JSON.parse(e.target.result);
+                            // Compare storage version
+                            var newVersion = parseInt(newstorage.version.match(/^v(\d+)$/)[1], 10);
+                            var currentVersion = parseInt(storage.version.match(/^v(\d+)$/)[1], 10);
+                            if(newVersion > currentVersion) {
+                                // We manage storage upgrade, not downgrade
+                                eventMgr.onError("Incompatible version. Please upgrade StackEdit.");
+                            } else {
+                                $('.modal-import-docs-settings').modal('show');
+                            }
+                        }
+                        catch(exc) {
+                            eventMgr.onError("Wrong format: " + importedFile.name);
+                        }
+                        $("#input-file-import-docs-settings").val('');
+                    };
+                })(file);
+                reader.readAsText(file);
+            });
+        });
+        $(".action-import-docs-settings-confirm").click(function() {
+            storage.clear();
+            var allowedKeys = /^file\.|^folder\.|^publish\.|^settings$|^sync\.|^google\.|^author\.|^themeV4$|^version$/;
+            _.each(newstorage, function(value, key) {
+                if(allowedKeys.test(key)) {
+                    storage[key] = value;
+                }
+            });
+            window.location.reload();
+        });
+        // Export settings
+        $(".action-export-docs-settings").click(function() {
+            utils.saveAs(JSON.stringify(storage), "StackEdit local storage.json");
+        });
 
-		$(".action-default-settings").click(function() {
-			storage.removeItem("settings");
-			storage.removeItem("theme");
-			if(!settings.dropboxFullAccess) {
-				storage.removeItem('dropbox.lastChangeId');
-			}
-			window.location.reload();
-		});
+        $(".action-default-settings").click(function() {
+            storage.removeItem("settings");
+            storage.removeItem("theme");
+            if(!settings.dropboxFullAccess) {
+                storage.removeItem('dropbox.lastChangeId');
+            }
+            window.location.reload();
+        });
 
-		$(".action-app-reset").click(function() {
-			storage.clear();
-			window.location.reload();
-		});
+        $(".action-app-reset").click(function() {
+            storage.clear();
+            window.location.reload();
+        });
 
-		// Reset inputs
-		$(".action-reset-input").click(function() {
-			utils.resetModalInputs();
-		});
+        // Reset inputs
+        $(".action-reset-input").click(function() {
+            utils.resetModalInputs();
+        });
 
-		utils.createTooltip(".tooltip-lazy-rendering", 'Disable preview rendering while typing in order to offload CPU. Refresh preview after 500 ms of inactivity.');
-		utils.createTooltip(".tooltip-default-content", [
-			'Thanks for supporting StackEdit by adding a backlink in your documents!<br/><br/>',
-			'<b class="text-danger">NOTE: Backlinks in Stack Exchange Q/A are not welcome.</b>'
-		].join(''));
-		utils.createTooltip(".tooltip-template", settingsTemplateTooltipHTML);
-		utils.createTooltip(".tooltip-pdf-options", settingsPdfOptionsTooltipHTML);
+        utils.createTooltip(".tooltip-lazy-rendering", 'Disable preview rendering while typing in order to offload CPU. Refresh preview after 500 ms of inactivity.');
+        utils.createTooltip(".tooltip-default-content", [
+            'Thanks for supporting StackEdit by adding a backlink in your documents!<br/><br/>',
+            '<b class="text-danger">NOTE: Backlinks in Stack Exchange Q/A are not welcome.</b>'
+        ].join(''));
+        utils.createTooltip(".tooltip-template", settingsTemplateTooltipHTML);
+        utils.createTooltip(".tooltip-pdf-options", settingsPdfOptionsTooltipHTML);
 
-		// Avoid dropdown panels to close on click
-		$("div.dropdown-menu").click(function(e) {
-			e.stopPropagation();
-		});
+        // Avoid dropdown panels to close on click
+        $("div.dropdown-menu").click(function(e) {
+            e.stopPropagation();
+        });
 
-		// Non unique window dialog
-		$('.modal-non-unique').modal({
-			backdrop: "static",
-			keyboard: false,
-			show: false
-		});
+        // Non unique window dialog
+        $('.modal-non-unique').modal({
+            backdrop: "static",
+            keyboard: false,
+            show: false
+        });
 
-		// Load images
-		_.each(document.querySelectorAll('img'), function(imgElt) {
-			var $imgElt = $(imgElt);
-			var src = $imgElt.data('stackeditSrc');
-			if(src) {
-				$imgElt.attr('src', window.baseDir + '/img/' + src);
-			}
-		});
+        // Load images
+        _.each(document.querySelectorAll('img'), function(imgElt) {
+            var $imgElt = $(imgElt);
+            var src = $imgElt.data('stackeditSrc');
+            if(src) {
+                $imgElt.attr('src', window.baseDir + '/img/' + src);
+            }
+        });
 
-		if(window.viewerMode === false) {
-			// Load theme list
-			var themeOptions = _.reduce(constants.THEME_LIST, function(themeOptions, name, value) {
-				return themeOptions + '<option value="' + value + '">' + name + '</option>';
-			}, '');
-			document.getElementById('input-settings-theme').innerHTML = themeOptions;
-		}
+        if(window.viewerMode === false) {
+            // Load theme list
+            var themeOptions = _.reduce(constants.THEME_LIST, function(themeOptions, name, value) {
+                return themeOptions + '<option value="' + value + '">' + name + '</option>';
+            }, '');
+            document.getElementById('input-settings-theme').innerHTML = themeOptions;
+        }
 
-		//$('.modal-header').append('<a class="dialog-header-message" href="https://github.com/benweet/stackedit/issues/385" target="_blank">Give your feedback <i class="icon-megaphone"></i></a>');
-		//checkPayment();
-	});
+        //$('.modal-header').append('<a class="dialog-header-message" href="https://github.com/benweet/stackedit/issues/385" target="_blank">Give your feedback <i class="icon-megaphone"></i></a>');
+        //checkPayment();
+    });
 
-	return core;
+    return core;
 });

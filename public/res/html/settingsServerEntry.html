@@ -1,0 +1,26 @@
+<div class="panel panel-default" data-server="<%= server.id %>">
+    <div class="panel-heading">
+        <% if (typeof(server.header) != "undefined") {print(server.header)} else {print(server.name)} %>
+        <button type="button" class="action-servers-delete close pull-right" aria-hidden="true" title="Delete">&times;</button>
+    </div>
+    <div class="panel-body">
+        <div class="form-horizontal">
+            <div class="form-group">
+                <label class="col-lg-2 control-label"
+                    for="input-settings-server-<%= serverGroupId %>-<%= server.id %>-name">Name:</label>
+                <div class="col-lg-10 form-inline">
+                    <input type="text" id="input-settings-server-<%= serverGroupId %>-<%= server.id %>-name"
+                        class="form-control col-lg-12">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-2 control-label"
+                       for="input-settings-server-<%= serverGroupId %>-<%= server.id %>-url">URL:</label>
+                <div class="col-lg-10 form-inline">
+                    <input type="text" id="input-settings-server-<%= serverGroupId %>-<%= server.id %>-url"
+                           class="form-control col-lg-12">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -56,7 +56,15 @@ define([
 			'    "pageSize": "A4"',
 			'}'
 		].join('\n'),
-		extensionSettings: {}
+		extensionSettings: {},
+        servers: {
+            "owncloud": {
+                name: "Own Cloud",
+                servers:[
+                    {id: 1, name: "Public", url: "https://owncloud.com/"}
+                ]
+            }
+        }
 	};
 
 	try {
