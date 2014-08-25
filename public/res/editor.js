@@ -1106,7 +1106,7 @@ define([
 	})();
 
 	function highlight(section) {
-		var text = escape(section.text);
+		var text = section.text;
 		if(!window.viewerMode) {
 			text = Prism.highlight(text, Prism.languages.md);
 		}
