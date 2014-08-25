@@ -36,6 +36,7 @@ define([], function() {
 	constants.TUMBLR_PROXY_URL = "https://stackedit-tumblr-proxy-local.herokuapp.com/";
 	constants.WORDPRESS_CLIENT_ID = '23361';
 	constants.WORDPRESS_PROXY_URL = "https://stackedit-io-wordpress-proxy.herokuapp.com/";
+    constants.SHOW_CONTRIBUTE_ALERT = false;
 
 	if(location.hostname.indexOf("stackedit.io") === 0) {
 		constants.BASE_URL = constants.MAIN_URL;
@@ -43,6 +44,7 @@ define([], function() {
 		constants.GITHUB_CLIENT_ID = '710fc67886ab1ae8fee6';
 		constants.GATEKEEPER_URL = "https://stackedit-io-gatekeeper.herokuapp.com/";
 		constants.TUMBLR_PROXY_URL = "https://stackedit-io-tumblr-proxy.herokuapp.com/";
+        constants.SHOW_CONTRIBUTE_ALERT = true;
 	}
 	else if(location.hostname.indexOf("benweet.github.io") === 0) {
 		constants.BASE_URL = 'http://benweet.github.io/stackedit/';
@@ -52,6 +54,7 @@ define([], function() {
 		constants.TUMBLR_PROXY_URL = "https://stackedit-tumblr-proxy.herokuapp.com/";
 		constants.WORDPRESS_CLIENT_ID = '3185';
 		constants.WORDPRESS_PROXY_URL = "https://stackedit-wordpress-proxy.herokuapp.com/";
+        constants.SHOW_CONTRIBUTE_ALERT = true;
 	}
 	else if(location.hostname.indexOf("stackedit-beta.herokuapp.com") === 0) {
 		constants.BASE_URL = 'https://stackedit-beta.herokuapp.com/';
@@ -61,6 +64,7 @@ define([], function() {
 		constants.TUMBLR_PROXY_URL = "https://stackedit-beta-tumblr-proxy.herokuapp.com/";
 		constants.WORDPRESS_CLIENT_ID = '34786';
 		constants.WORDPRESS_PROXY_URL = "https://stackedit-beta-wordpress-proxy.herokuapp.com/";
+        constants.SHOW_CONTRIBUTE_ALERT = true;
 	}
 	else if(location.hostname.indexOf("benweet.insomnia247.nl") === 0) {
 		constants.BASE_URL = "http://benweet.insomnia247.nl/stackedit/";
@@ -68,6 +72,7 @@ define([], function() {
 		constants.GITHUB_CLIENT_ID = 'd2943d6074b2d9c4a830';
 		constants.GATEKEEPER_URL = "https://stackedit-gatekeeper-insomnia.herokuapp.com/";
 		constants.TUMBLR_PROXY_URL = "https://stackedit-tumblr-proxy-beta.herokuapp.com/";
+        constants.SHOW_CONTRIBUTE_ALERT = true;
 	}
 
 	constants.THEME_LIST = {

@@ -364,7 +364,7 @@ define([
     }
 
 	var checkPayment = _.debounce(function() {
-		if(isOffline) {
+		if(isOffline || !constants.SHOW_CONTRIBUTE_ALERT) {
 			return;
 		}
 		monetize.getPaymentsImmediate(function(err, payments) {
@@ -380,7 +380,7 @@ define([
 		});
 	}, 3000);
 
-    //eventMgr.addListener('onOfflineChanged', checkPayment);
+    eventMgr.addListener('onOfflineChanged', checkPayment);
 
     // Other initialization that are not prioritary
     eventMgr.addListener("onReady", function() {
@@ -580,7 +580,7 @@ define([
         }
 
         //$('.modal-header').append('<a class="dialog-header-message" href="https://github.com/benweet/stackedit/issues/385" target="_blank">Give your feedback <i class="icon-megaphone"></i></a>');
-        //checkPayment();
+        checkPayment();
     });
 
     return core;
